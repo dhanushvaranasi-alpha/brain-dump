@@ -22,7 +22,27 @@ Single-user, personal use. Cloud-synced across devices (phone + laptop) via a ba
 - **Bun** — package manager
 - **Deploy** — Vercel (frontend) + Supabase cloud (backend)
 
-## 3. Data Model
+## 3. UI Design Direction
+
+**Aesthetic: Glassmorphism.** Frosted-glass panels (backdrop blur, translucency, subtle
+border/inner highlights) layered over soft vibrant accent gradients; depth conveyed through
+layering and soft shadows. Premium, modern feel — especially on mobile.
+
+- **Theme:** Light and dark, following system by default with a manual toggle. A subtle gradient
+  backdrop sits behind the frosted surfaces in both themes to sell the glass effect.
+- **Motion:** Rich but tasteful — spring-based transitions (e.g. Framer Motion), a satisfying
+  task check-off/complete animation, subtle hover/press states. Respects
+  `prefers-reduced-motion`.
+- **Implementation notes:**
+  - Tailwind utilities for glass surfaces (`backdrop-blur`, translucent backgrounds, ring/border
+    highlights); theme tokens via CSS variables.
+  - Accessibility: glass can hurt legibility — enforce sufficient text contrast over translucent
+    surfaces and provide solid fallbacks where needed.
+  - Mobile performance: limit the number of stacked blur layers to keep scrolling smooth.
+- Detailed visual execution (component styling, typography scale, exact palette) will be handled
+  by the `frontend-design` skill during implementation.
+
+## 4. Data Model
 
 All rows are scoped to the authenticated user and protected by Row-Level Security (RLS).
 
@@ -73,7 +93,7 @@ a unified, ranked result set. Tags stored as `text[]` with GIN indexes (simplest
 single-user scale). Trade-off: renaming a tag globally is not a first-class operation; acceptable
 for v1.
 
-## 4. Key Features
+## 5. Key Features
 
 - **Quick capture** — floating "+" button opens a capture modal; pick Task or Note; save with
   minimal friction.
@@ -92,7 +112,7 @@ for v1.
 - **Global search** — one search box; mixed task + note results; matches text, tags, category
 - **Auth** — magic-link login and logout; user only ever sees their own data (enforced by RLS)
 
-## 5. App Structure
+## 6. App Structure
 
 Routes:
 - `/tasks` — Tasks view
@@ -108,7 +128,7 @@ Library layer:
 - Per-entity data-access modules (categories, tasks, subtasks, notes, search)
 - Server actions (or route handlers) for mutations, with RLS enforced at the DB
 
-## 6. Error Handling
+## 7. Error Handling
 
 - Optimistic UI updates with rollback on failure
 - Toast notifications for errors
@@ -116,14 +136,14 @@ Library layer:
 - Friendly empty states for each view
 - Graceful connection-error handling (data is cloud-synced, not offline-first)
 
-## 7. Testing
+## 8. Testing
 
 - **Unit** — pure logic: recurrence next-date calculation, search query building
 - **Integration** — data-access modules + RLS policies (a user cannot read another user's rows)
 - **Component** — capture modal and the Tasks/Notes view toggle
 - **E2E (Playwright)** — core flow: capture a task → complete it → find it via search
 
-## 8. Out of Scope for v1 (YAGNI)
+## 9. Out of Scope for v1 (YAGNI)
 
 - Sharing / collaboration / multi-user
 - Offline-first sync
