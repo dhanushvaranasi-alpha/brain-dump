@@ -1,0 +1,34 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GET } from "./route";
+
+const verifyOtp = vi.fn();
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: async () => ({ auth: { verifyOtp } }),
+}));
+
+function req(url: string) {
+  return new Request(url) as unknown as import("next/server").NextRequest;
+}
+
+describe("GET /auth/confirm", () => {
+  beforeEach(() => verifyOtp.mockReset());
+
+  it("redirects to next on success", async () => {
+    verifyOtp.mockResolvedValue({ error: null });
+    const res = await GET(
+      req(
+        "http://localhost/auth/confirm?token_hash=abc&type=email&next=/tasks",
+      ),
+    );
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("http://localhost/tasks");
+  });
+
+  it("redirects to /login on failure", async () => {
+    verifyOtp.mockResolvedValue({ error: { message: "expired" } });
+    const res = await GET(
+      req("http://localhost/auth/confirm?token_hash=bad&type=email"),
+    );
+    expect(res.headers.get("location")).toContain("/login");
+  });
+});
