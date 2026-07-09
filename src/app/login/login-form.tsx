@@ -93,7 +93,9 @@ export function LoginForm() {
               transition={{ delay: 0.2 }}
               className="mt-6 space-y-4"
             >
-              <label className="block text-sm font-medium">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium">
+                Email
+              </label>
               <motion.input
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
