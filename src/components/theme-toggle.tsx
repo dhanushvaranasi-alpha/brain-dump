@@ -1,31 +1,53 @@
 "use client";
 
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-
-const ORDER = ["light", "dark", "system"] as const;
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">("light");
 
-  const current = mounted ? (theme ?? "system") : "system";
-  const label = current[0].toUpperCase() + current.slice(1);
+  useEffect(() => {
+    setMounted(true);
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      setCurrentTheme(systemTheme);
+    } else {
+      setCurrentTheme(theme as "light" | "dark");
+    }
+  }, [theme]);
 
-  function cycle() {
-    const idx = ORDER.indexOf(current as (typeof ORDER)[number]);
-    setTheme(ORDER[(idx + 1) % ORDER.length]);
+  function toggle() {
+    setTheme(currentTheme === "light" ? "dark" : "light");
   }
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm backdrop-blur opacity-50"
+      >
+        <Moon className="h-4 w-4" />
+      </button>
+    );
+  }
+
+  const Icon = currentTheme === "light" ? Sun : Moon;
 
   return (
     <button
       type="button"
-      onClick={cycle}
-      aria-label={`Theme: ${label}. Click to change.`}
-      className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm backdrop-blur transition hover:bg-white/20"
+      onClick={toggle}
+      aria-label={`Theme: ${currentTheme}. Click to change.`}
+      className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm backdrop-blur transition hover:bg-white/20 dark:border-white/10 dark:bg-white/5"
     >
-      {label}
+      <Icon className="h-4 w-4" />
     </button>
   );
 }

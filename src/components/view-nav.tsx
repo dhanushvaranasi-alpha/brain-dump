@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,13 +21,14 @@ export function ViewNav() {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={
-              "rounded-lg px-4 py-1.5 text-sm font-medium transition " +
+              "relative flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition " +
               (active
-                ? "bg-white/70 text-slate-900 shadow dark:bg-white/20 dark:text-white"
-                : "opacity-70 hover:opacity-100")
+                ? "bg-indigo-500/80 text-white shadow-md"
+                : "opacity-70 hover:opacity-100 hover:bg-white/10")
             }
           >
             {item.label}
+            {active && <Check className="h-3 w-3" />}
           </Link>
         );
       })}
