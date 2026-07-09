@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewNav } from "@/components/view-nav";
