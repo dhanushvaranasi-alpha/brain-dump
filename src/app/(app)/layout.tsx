@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewNav } from "@/components/view-nav";
 
@@ -29,6 +30,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </motion.span>
           <ViewNav />
           <div className="flex items-center gap-2">
+            <Link
+              href="/categories"
+              className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm backdrop-blur transition hover:bg-white/20"
+            >
+              Categories
+            </Link>
             <ThemeToggle />
             <form action="/auth/signout" method="post">
               <motion.button
