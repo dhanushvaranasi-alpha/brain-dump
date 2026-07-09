@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
 
-const verifyOtp = vi.fn();
+const exchangeCodeForSession = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: async () => ({ auth: { verifyOtp } }),
+  createClient: async () => ({ auth: { exchangeCodeForSession } }),
 }));
 
 function req(url: string) {
@@ -11,24 +11,20 @@ function req(url: string) {
 }
 
 describe("GET /auth/confirm", () => {
-  beforeEach(() => verifyOtp.mockReset());
+  beforeEach(() => exchangeCodeForSession.mockReset());
 
   it("redirects to next on success", async () => {
-    verifyOtp.mockResolvedValue({ error: null });
+    exchangeCodeForSession.mockResolvedValue({ error: null });
     const res = await GET(
-      req(
-        "http://localhost/auth/confirm?token_hash=abc&type=email&next=/tasks",
-      ),
+      req("http://localhost/auth/confirm?code=abc&next=/tasks"),
     );
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe("http://localhost/tasks");
   });
 
   it("redirects to /login on failure", async () => {
-    verifyOtp.mockResolvedValue({ error: { message: "expired" } });
-    const res = await GET(
-      req("http://localhost/auth/confirm?token_hash=bad&type=email"),
-    );
+    exchangeCodeForSession.mockResolvedValue({ error: { message: "expired" } });
+    const res = await GET(req("http://localhost/auth/confirm?code=bad"));
     expect(res.headers.get("location")).toContain("/login");
   });
 });
