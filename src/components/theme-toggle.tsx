@@ -49,7 +49,7 @@ export function ThemeToggle() {
     >
       <motion.div
         initial={{ rotate: 0, opacity: 1 }}
-        animate={{ rotate: currentTheme === "dark" ? 180 : 0, opacity: 1 }}
+        animate={{ rotate: 0, opacity: 1 }}
         transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
       >
         <Icon className="h-4 w-4" />
