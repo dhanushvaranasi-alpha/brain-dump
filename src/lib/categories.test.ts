@@ -58,6 +58,13 @@ describe("createCategory", () => {
     });
     expect(result).toEqual(row);
   });
+
+  it("throws when Supabase returns an error", async () => {
+    const { client } = mockSupabase({ data: null, error: new Error("dup") });
+    await expect(
+      createCategory(client, { name: "Work", color: "#6366f1" }),
+    ).rejects.toThrow("dup");
+  });
 });
 
 describe("updateCategory", () => {
@@ -68,6 +75,20 @@ describe("updateCategory", () => {
     expect(builder.update).toHaveBeenCalledWith({ name: "Home" });
     expect(builder.eq).toHaveBeenCalledWith("id", "1");
     expect(result).toEqual(row);
+  });
+
+  it("updates color only when name is absent", async () => {
+    const row = { id: "1", name: "Work", color: "#ef4444" };
+    const { client, builder } = mockSupabase({ data: row, error: null });
+    await updateCategory(client, "1", { color: "#ef4444" });
+    expect(builder.update).toHaveBeenCalledWith({ color: "#ef4444" });
+  });
+
+  it("throws when Supabase returns an error", async () => {
+    const { client } = mockSupabase({ data: null, error: new Error("boom") });
+    await expect(updateCategory(client, "1", { name: "X" })).rejects.toThrow(
+      "boom",
+    );
   });
 });
 

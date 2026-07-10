@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Category } from "@/lib/categories";
 
@@ -53,6 +54,7 @@ beforeEach(() => {
   create.mockReset();
   update.mockReset();
   remove.mockReset();
+  vi.mocked(toast.error).mockReset();
 });
 
 describe("CategoryManager", () => {
@@ -82,5 +84,36 @@ describe("CategoryManager", () => {
     await userEvent.click(screen.getByRole("button", { name: /delete work/i }));
     expect(screen.queryByDisplayValue("Work")).not.toBeInTheDocument();
     expect(remove).toHaveBeenCalledWith(expect.anything(), "c1");
+  });
+
+  it("rolls back and toasts when a delete fails", async () => {
+    remove.mockRejectedValue(new Error("fail"));
+    render(<CategoryManager initial={CATS} />);
+    await userEvent.click(screen.getByRole("button", { name: /delete work/i }));
+    // optimistic removal was rolled back → the row is restored
+    expect(screen.getByDisplayValue("Work")).toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it("does not add and toasts when a create fails", async () => {
+    create.mockRejectedValue(new Error("fail"));
+    render(<CategoryManager initial={CATS} />);
+    await userEvent.type(screen.getByPlaceholderText(/new category/i), "Home");
+    await userEvent.click(screen.getByRole("button", { name: /^add$/i }));
+    expect(screen.queryByDisplayValue("Home")).not.toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it("toasts when a rename fails", async () => {
+    update.mockRejectedValue(new Error("fail"));
+    render(<CategoryManager initial={CATS} />);
+    const input = screen.getByLabelText(/rename work/i);
+    await userEvent.clear(input);
+    await userEvent.type(input, "Admin");
+    await userEvent.tab();
+    expect(update).toHaveBeenCalledWith(expect.anything(), "c1", {
+      name: "Admin",
+    });
+    expect(toast.error).toHaveBeenCalled();
   });
 });
