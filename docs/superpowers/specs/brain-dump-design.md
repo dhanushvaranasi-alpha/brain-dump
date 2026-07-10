@@ -104,7 +104,8 @@ tag globally is not a first-class operation; acceptable for v1.
 - **Tasks**
   - Due dates with grouping: Today / Overdue / Upcoming / No date
   - Priority flags (none / low / med / high)
-  - Subtask checklists (ordered, checkable)
+  - Subtask checklists (ordered, checkable) — managed inside the task capture/edit modal
+    (add / check / delete, insertion order); the task card shows a "done/total" progress badge.
   - Recurring tasks — user picks a **frequency (monthly or annually) with an interval** and a
     **lead time** (days before the due date). The next occurrence is **not** generated at
     completion; instead it **surfaces a configurable number of days before its due date**
@@ -119,7 +120,8 @@ tag globally is not a first-class operation; acceptable for v1.
   note (type a name that doesn't exist → "Create '…'"). Assign to any task or note; deleting a
   category leaves its items intact (their `category_id` becomes null).
 - **Tags** — freeform labels stored as `text[]`; a chip-style input adds/removes them inline.
-  Filter by them (filtering ships with the Tasks/Notes lists, not before).
+  Filter by them: the Tasks list has a filter bar (single category + tags, matching **all**
+  selected tags) applied client-side over the loaded list, then grouped as usual.
 - **View toggle** — Tasks ⇄ Notes as the primary navigation (mobile: segmented control /
   bottom nav; state persists)
 - **Global search** — one search box; mixed task + note results; matches text, tags, category
