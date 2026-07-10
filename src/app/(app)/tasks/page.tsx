@@ -1,10 +1,19 @@
-import { EmptyState } from "@/components/empty-state";
+import { redirect } from "next/navigation";
+import { listCategories } from "@/lib/categories";
+import { createClient } from "@/lib/supabase/server";
+import { listTasks } from "@/lib/tasks";
+import { TaskList } from "./task-list";
 
-export default function TasksPage() {
-  return (
-    <EmptyState
-      title="No tasks yet"
-      description="Capture your first task — due dates, priorities, and checklists come next."
-    />
-  );
+export default async function TasksPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const [tasks, categories] = await Promise.all([
+    listTasks(supabase),
+    listCategories(supabase),
+  ]);
+  return <TaskList initialTasks={tasks} categories={categories} />;
 }
