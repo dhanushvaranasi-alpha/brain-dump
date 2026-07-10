@@ -12,7 +12,6 @@ import { createClient } from "@/lib/supabase/client";
 import { GROUP_LABELS, GROUP_ORDER, groupTasks } from "@/lib/task-groups";
 import {
   createTask,
-  deleteTask,
   type Task,
   type TaskInput,
   toggleComplete,
