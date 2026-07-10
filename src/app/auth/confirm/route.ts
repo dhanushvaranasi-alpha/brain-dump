@@ -4,7 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/tasks";
+  // Only allow local paths as the post-auth destination. Reject absolute URLs
+  // and protocol-relative (`//`, `/\`) values to prevent an open redirect.
+  const rawNext = searchParams.get("next") ?? "/tasks";
+  const next = /^\/(?![/\\])/.test(rawNext) ? rawNext : "/tasks";
 
   if (code) {
     const supabase = await createClient();
