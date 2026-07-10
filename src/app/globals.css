@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --backdrop-from: #eef2ff;
+  --backdrop-via: #faf5ff;
+  --backdrop-to: #ecfeff;
+  --foreground: #0f172a;
+}
+
+.dark {
+  --backdrop-from: #0b1020;
+  --backdrop-via: #1a1030;
+  --backdrop-to: #041826;
+  --foreground: #e5e7eb;
+}
+
+body {
+  color: var(--foreground);
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      1200px 600px at 10% -20%,
+      var(--backdrop-from),
+      transparent 60%
+    ),
+    radial-gradient(
+      1000px 500px at 90% 0%,
+      var(--backdrop-via),
+      transparent 55%
+    ),
+    radial-gradient(
+      800px 400px at 80% 90%,
+      var(--backdrop-from),
+      transparent 50%
+    ),
+    radial-gradient(
+      900px 450px at 20% 80%,
+      var(--backdrop-via),
+      transparent 55%
+    ),
+    linear-gradient(160deg, var(--backdrop-via), var(--backdrop-to));
+  background-attachment: fixed;
+  animation: bgShift 20s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift {
+  0% {
+    background-position:
+      0% 50%,
+      100% 0%,
+      80% 90%,
+      20% 80%;
+  }
+  100% {
+    background-position:
+      100% 50%,
+      0% 0%,
+      20% 90%,
+      80% 80%;
+  }
+}
