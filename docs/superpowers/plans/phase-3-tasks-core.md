@@ -1300,6 +1300,14 @@ describe("TaskList", () => {
     );
     expect(toggleComplete).toHaveBeenCalledWith(expect.anything(), "t1", true);
   });
+
+  it("opens the edit modal pre-filled when a task is clicked", async () => {
+    render(<TaskList initialTasks={[task({})]} categories={CATS} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /edit buy milk/i }),
+    );
+    expect(screen.getByDisplayValue("Buy milk")).toBeInTheDocument();
+  });
 });
 ```
 
@@ -1331,7 +1339,6 @@ import {
 } from "@/lib/task-groups";
 import {
   createTask,
-  deleteTask,
   type Task,
   type TaskInput,
   toggleComplete,
@@ -1454,23 +1461,31 @@ export function TaskList({
         <Plus className="h-6 w-6" />
       </motion.button>
 
-      <TaskCaptureModal
-        open={modalOpen}
-        initial={editing}
-        categories={categories}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleSubmit}
-        onCreateCategory={handleCreateCategory}
-      />
+      {modalOpen && (
+        <TaskCaptureModal
+          key={editing?.id ?? "new"}
+          open
+          initial={editing}
+          categories={categories}
+          onClose={() => setModalOpen(false)}
+          onSubmit={handleSubmit}
+          onCreateCategory={handleCreateCategory}
+        />
+      )}
     </div>
   );
 }
 ```
 
+> **Note (mount-per-open):** the modal is rendered only while `modalOpen` and is
+> `key`ed by `editing?.id ?? "new"`, so it mounts fresh each time it opens and its
+> `useState(initial?.…)` seeds re-run — this is what makes edit mode pre-fill and
+> avoids stale form state when switching between tasks.
+
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `bun run test "src/app/(app)/tasks/task-list.test.tsx"`
-Expected: PASS — all three cases green.
+Expected: PASS — all four cases green.
 
 - [ ] **Step 6: Full suite, typecheck, lint**
 
