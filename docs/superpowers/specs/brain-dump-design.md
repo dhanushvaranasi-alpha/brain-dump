@@ -10,7 +10,11 @@ mind. You capture an item and choose its type — **Task** or **Note** — then 
 **shared categories** and freeform **tags**, and find anything through **global full-text
 search**. The app has two primary views the user toggles between: **Tasks** and **Notes**.
 
-Single-user, personal use. Cloud-synced across devices (phone + laptop) via a backend.
+**Multi-user:** every user signs in to their own **private space** — their tasks, notes,
+and categories are fully isolated from other users by Row-Level Security (`auth.uid() =
+user_id`). No data is shared between users in v1; content sharing and collaboration are a
+v2 concern (see §9). Each space is personal and cloud-synced across devices (phone +
+laptop) via a backend.
 
 ## 2. Tech Stack
 
@@ -89,9 +93,9 @@ Checklist items belonging to a task, ordered.
 
 ### Search
 A Postgres function (RPC) queries both `tasks` and `notes` `search_vector` columns and returns
-a unified, ranked result set. Tags stored as `text[]` with GIN indexes (simplest approach for
-single-user scale). Trade-off: renaming a tag globally is not a first-class operation; acceptable
-for v1.
+a unified, ranked result set. Tags stored as `text[]` with GIN indexes (simplest approach at
+this scale; tags are per-user, so each user's tag set is independent). Trade-off: renaming a
+tag globally is not a first-class operation; acceptable for v1.
 
 ## 5. Key Features
 
@@ -105,8 +109,13 @@ for v1.
     is generated with a recomputed `due_at`
   - Check-off to complete
 - **Notes** — markdown body with edit/preview toggle, title, tags, category
-- **Shared categories** — manage (add / edit / delete, pick a color); assign to any task or note
-- **Tags** — freeform labels; filter by them
+- **Shared categories** — a dedicated `/categories` page manages them **Google-Keep-labels
+  style**: inline add, rename, recolor, and delete, with no heavyweight forms. Categories can
+  also be **created organically on-the-fly** from the category picker while tagging a task or
+  note (type a name that doesn't exist → "Create '…'"). Assign to any task or note; deleting a
+  category leaves its items intact (their `category_id` becomes null).
+- **Tags** — freeform labels stored as `text[]`; a chip-style input adds/removes them inline.
+  Filter by them (filtering ships with the Tasks/Notes lists, not before).
 - **View toggle** — Tasks ⇄ Notes as the primary navigation (mobile: segmented control /
   bottom nav; state persists)
 - **Global search** — one search box; mixed task + note results; matches text, tags, category
@@ -117,11 +126,13 @@ for v1.
 Routes:
 - `/tasks` — Tasks view
 - `/notes` — Notes view
+- `/categories` — manage shared categories (add / rename / recolor / delete)
 - `/search` — search results (or an inline overlay)
 - `/login` — magic-link login
 - `/auth/callback` — Supabase auth callback
 
-Shared components: capture modal, category picker, tag input, item card (task/note).
+Shared components: capture modal, category picker (supports create-on-type), tag input,
+item card (task/note).
 
 Library layer:
 - `lib/supabase` — browser and server Supabase clients
@@ -145,7 +156,14 @@ Library layer:
 
 ## 9. Out of Scope for v1 (YAGNI)
 
-- Sharing / collaboration / multi-user
+The app **is** multi-user in v1 — but only as isolated private spaces (each user sees only
+their own data). What's deferred is users working on **shared** content:
+
+- **Content sharing / collaboration — deferred to v2.** Shared spaces/workspaces, sharing an
+  individual category/task/note with another user, and any team/role model. When we build
+  this, the data model shifts from owner-scoped (`user_id`) toward space/membership-scoped,
+  with RLS granting access by membership or share grant rather than sole ownership. Nothing
+  in v1 should assume data can only ever belong to one user forever, but v1 builds none of it.
 - Offline-first sync
 - AI features
 - Note-to-note backlinks
