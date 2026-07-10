@@ -68,7 +68,7 @@ User-managed, shared across tasks and notes.
 - `priority` (enum: `none` | `low` | `med` | `high`, default `none`)
 - `due_at` (timestamptz, nullable)
 - `status` (enum: `todo` | `done`, default `todo`)
-- `recurrence` (jsonb, nullable) — e.g. `{ "freq": "weekly", "interval": 1 }`
+- `recurrence` (jsonb, nullable) — e.g. `{ "freq": "monthly", "interval": 1, "lead_days": 5 }`
 - `completed_at` (timestamptz, nullable)
 - `created_at`, `updated_at` (timestamptz)
 - `search_vector` (tsvector, GIN-indexed, generated from title + description)
@@ -105,8 +105,12 @@ tag globally is not a first-class operation; acceptable for v1.
   - Due dates with grouping: Today / Overdue / Upcoming / No date
   - Priority flags (none / low / med / high)
   - Subtask checklists (ordered, checkable)
-  - Recurring tasks (daily / weekly / monthly with interval); on completion the next occurrence
-    is generated with a recomputed `due_at`
+  - Recurring tasks — user picks a **frequency (monthly or annually) with an interval** and a
+    **lead time** (days before the due date). The next occurrence is **not** generated at
+    completion; instead it **surfaces a configurable number of days before its due date**
+    (e.g. next month, 5 days before it's due) so there's time to complete it. Fully
+    customisable per task. Config lives in `recurrence` jsonb, e.g.
+    `{ "freq": "monthly", "interval": 1, "lead_days": 5 }`.
   - Check-off to complete
 - **Notes** — markdown body with edit/preview toggle, title, tags, category
 - **Shared categories** — a dedicated `/categories` page manages them **Google-Keep-labels
