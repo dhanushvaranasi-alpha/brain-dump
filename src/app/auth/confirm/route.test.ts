@@ -27,4 +27,36 @@ describe("GET /auth/confirm", () => {
     const res = await GET(req("http://localhost/auth/confirm?code=bad"));
     expect(res.headers.get("location")).toContain("/login");
   });
+
+  it("ignores a protocol-relative next and falls back to /tasks", async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: null });
+    const res = await GET(
+      req("http://localhost/auth/confirm?code=abc&next=//evil.com"),
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/tasks");
+  });
+
+  it("ignores an absolute-URL next and falls back to /tasks", async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: null });
+    const res = await GET(
+      req("http://localhost/auth/confirm?code=abc&next=https://evil.com"),
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/tasks");
+  });
+
+  it("ignores a backslash-tricked next and falls back to /tasks", async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: null });
+    const res = await GET(
+      req("http://localhost/auth/confirm?code=abc&next=/\\evil.com"),
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/tasks");
+  });
+
+  it("preserves a safe local next path", async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: null });
+    const res = await GET(
+      req("http://localhost/auth/confirm?code=abc&next=/notes"),
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/notes");
+  });
 });
