@@ -109,4 +109,50 @@ describe("TaskList", () => {
     );
     expect(screen.getByDisplayValue("Buy milk")).toBeInTheDocument();
   });
+
+  it("shows a subtask progress badge on a task's card", () => {
+    render(
+      <TaskList
+        initialTasks={[task({ id: "t1" })]}
+        categories={CATS}
+        initialSubtasks={[
+          {
+            id: "s1",
+            task_id: "t1",
+            title: "sub",
+            is_done: true,
+            position: 0,
+            created_at: "",
+          },
+          {
+            id: "s2",
+            task_id: "t1",
+            title: "sub2",
+            is_done: false,
+            position: 1,
+            created_at: "",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByLabelText(/1 of 2 subtasks done/i)).toBeInTheDocument();
+  });
+
+  it("filters the list by tag", async () => {
+    render(
+      <TaskList
+        initialTasks={[
+          task({ id: "t1", title: "Work task", tags: ["work"] }),
+          task({ id: "t2", title: "Home task", tags: ["home"] }),
+        ]}
+        categories={CATS}
+      />,
+    );
+    expect(screen.getByText("Home task")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: /filter tag work/i }),
+    );
+    expect(screen.queryByText("Home task")).not.toBeInTheDocument();
+    expect(screen.getByText("Work task")).toBeInTheDocument();
+  });
 });

@@ -3,9 +3,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { Category } from "@/lib/categories";
+import type { SubtaskItem } from "@/lib/subtasks";
 import type { Priority, Task, TaskInput } from "@/lib/tasks";
 import { CategoryPicker } from "./category-picker";
 import { GlassPanel } from "./glass-panel";
+import { SubtaskChecklist } from "./subtask-checklist";
 import { TagInput } from "./tag-input";
 
 const PRIORITIES: Priority[] = ["none", "low", "med", "high"];
@@ -13,15 +15,17 @@ const PRIORITIES: Priority[] = ["none", "low", "med", "high"];
 interface TaskCaptureModalProps {
   open: boolean;
   initial?: Task | null;
+  initialSubtasks?: SubtaskItem[];
   categories: Category[];
   onClose: () => void;
-  onSubmit: (input: TaskInput) => Promise<void>;
+  onSubmit: (input: TaskInput, subtasks: SubtaskItem[]) => Promise<void>;
   onCreateCategory: (name: string) => Promise<Category>;
 }
 
 export function TaskCaptureModal({
   open,
   initial,
+  initialSubtasks = [],
   categories,
   onClose,
   onSubmit,
@@ -37,6 +41,7 @@ export function TaskCaptureModal({
     initial?.priority ?? "none",
   );
   const [dueDate, setDueDate] = useState(initial?.due_at?.slice(0, 10) ?? "");
+  const [subtasks, setSubtasks] = useState<SubtaskItem[]>(initialSubtasks);
   const [saving, setSaving] = useState(false);
 
   if (!open) return null;
@@ -48,14 +53,17 @@ export function TaskCaptureModal({
     if (!canSave) return;
     setSaving(true);
     try {
-      await onSubmit({
-        title: title.trim(),
-        description: description.trim() || null,
-        category_id: categoryId,
-        tags,
-        priority,
-        due_at: dueDate ? `${dueDate}T00:00:00.000Z` : null,
-      });
+      await onSubmit(
+        {
+          title: title.trim(),
+          description: description.trim() || null,
+          category_id: categoryId,
+          tags,
+          priority,
+          due_at: dueDate ? `${dueDate}T00:00:00.000Z` : null,
+        },
+        subtasks,
+      );
       onClose();
     } finally {
       setSaving(false);
@@ -138,6 +146,9 @@ export function TaskCaptureModal({
                 onChange={(e) => setDueDate(e.target.value)}
                 className="w-full rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-400"
               />
+
+              <span className="block text-sm font-medium">Subtasks</span>
+              <SubtaskChecklist items={subtasks} onChange={setSubtasks} />
 
               <div className="flex justify-end gap-2 pt-2">
                 <button

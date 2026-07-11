@@ -7,8 +7,18 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { TaskCaptureModal } from "@/components/task-capture-modal";
 import { TaskCard } from "@/components/task-card";
+import { TaskFilterBar } from "@/components/task-filter-bar";
 import { type Category, createCategory } from "@/lib/categories";
+import {
+  createSubtask,
+  deleteSubtask,
+  diffSubtasks,
+  type Subtask,
+  type SubtaskItem,
+  toggleSubtask,
+} from "@/lib/subtasks";
 import { createClient } from "@/lib/supabase/client";
+import { filterTasks, type TaskFilter } from "@/lib/task-filter";
 import { GROUP_LABELS, GROUP_ORDER, groupTasks } from "@/lib/task-groups";
 import {
   createTask,
@@ -22,19 +32,30 @@ function todayKey(): string {
   return new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD (local)
 }
 
+const EMPTY_FILTER: TaskFilter = { categoryId: null, tags: [] };
+
 export function TaskList({
   initialTasks,
   categories,
+  initialSubtasks = [],
 }: {
   initialTasks: Task[];
   categories: Category[];
+  initialSubtasks?: Subtask[];
 }) {
   const supabase = createClient();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [subtasks, setSubtasks] = useState<Subtask[]>(initialSubtasks);
+  const [filter, setFilter] = useState<TaskFilter>(EMPTY_FILTER);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
 
-  const groups = groupTasks(tasks, todayKey());
+  const groups = groupTasks(filterTasks(tasks, filter), todayKey());
+  const allTags = [...new Set(tasks.flatMap((t) => t.tags))].sort();
+
+  function subtasksFor(taskId: string): Subtask[] {
+    return subtasks.filter((s) => s.task_id === taskId);
+  }
 
   function openNew() {
     setEditing(null);
@@ -45,7 +66,38 @@ export function TaskList({
     setModalOpen(true);
   }
 
-  async function handleSubmit(input: TaskInput) {
+  async function persistSubtasks(taskId: string, submitted: SubtaskItem[]) {
+    const original = subtasksFor(taskId);
+    const { toCreate, toToggle, toDelete } = diffSubtasks(original, submitted);
+    const created = await Promise.all(
+      toCreate.map((s) =>
+        createSubtask(supabase, {
+          task_id: taskId,
+          title: s.title,
+          position: s.position,
+        }),
+      ),
+    );
+    await Promise.all(
+      toToggle.map((s) => toggleSubtask(supabase, s.id, s.is_done)),
+    );
+    await Promise.all(toDelete.map((id) => deleteSubtask(supabase, id)));
+    setSubtasks((prev) => {
+      const kept = prev.filter(
+        (s) => s.task_id !== taskId || !toDelete.includes(s.id),
+      );
+      const toggled = kept.map((s) => {
+        const t = toToggle.find((x) => x.id === s.id);
+        return t ? { ...s, is_done: t.is_done } : s;
+      });
+      return [...toggled, ...created];
+    });
+  }
+
+  async function handleSubmit(
+    input: TaskInput,
+    submittedSubtasks: SubtaskItem[],
+  ) {
     if (editing) {
       const prev = tasks;
       const target = editing;
@@ -55,6 +107,7 @@ export function TaskList({
       try {
         const saved = await updateTask(supabase, target.id, input);
         setTasks((ts) => ts.map((t) => (t.id === saved.id ? saved : t)));
+        await persistSubtasks(target.id, submittedSubtasks);
       } catch {
         setTasks(prev);
         toast.error("Could not save task");
@@ -63,6 +116,7 @@ export function TaskList({
       try {
         const created = await createTask(supabase, input);
         setTasks((ts) => [created, ...ts]);
+        await persistSubtasks(created.id, submittedSubtasks);
       } catch {
         toast.error("Could not add task");
       }
@@ -90,8 +144,23 @@ export function TaskList({
     return createCategory(supabase, { name, color: "#6366f1" });
   }
 
+  const editingSubtasks: SubtaskItem[] = editing
+    ? subtasksFor(editing.id).map((s) => ({
+        id: s.id,
+        title: s.title,
+        is_done: s.is_done,
+      }))
+    : [];
+
   return (
     <div className="space-y-4">
+      <TaskFilterBar
+        categories={categories}
+        allTags={allTags}
+        value={filter}
+        onChange={setFilter}
+      />
+
       {tasks.length === 0 ? (
         <EmptyState
           title="No tasks yet"
@@ -109,14 +178,19 @@ export function TaskList({
                 </h2>
                 <ul className="space-y-2">
                   <AnimatePresence initial={false}>
-                    {groupTasksList.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onToggle={handleToggle}
-                        onEdit={openEdit}
-                      />
-                    ))}
+                    {groupTasksList.map((task) => {
+                      const subs = subtasksFor(task.id);
+                      return (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onToggle={handleToggle}
+                          onEdit={openEdit}
+                          subtaskDone={subs.filter((s) => s.is_done).length}
+                          subtaskTotal={subs.length}
+                        />
+                      );
+                    })}
                   </AnimatePresence>
                 </ul>
               </section>
@@ -141,6 +215,7 @@ export function TaskList({
           key={editing?.id ?? "new"}
           open
           initial={editing}
+          initialSubtasks={editingSubtasks}
           categories={categories}
           onClose={() => setModalOpen(false)}
           onSubmit={handleSubmit}

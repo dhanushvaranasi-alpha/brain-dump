@@ -27,21 +27,39 @@ describe("TaskCaptureModal", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("submits a new task with a title and due date", async () => {
+  it("submits a new task with a title, due date, and subtasks", async () => {
     const props = baseProps();
     render(<TaskCaptureModal {...props} />);
     await userEvent.type(screen.getByLabelText(/title/i), "Buy milk");
     fireEvent.change(screen.getByLabelText(/due date/i), {
       target: { value: "2026-07-15" },
     });
+    await userEvent.type(
+      screen.getByPlaceholderText(/add a subtask/i),
+      "Get almond",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /^add subtask$/i }),
+    );
     await userEvent.click(screen.getByRole("button", { name: /^save$/i }));
     expect(props.onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "Buy milk",
         due_at: "2026-07-15T00:00:00.000Z",
       }),
+      [{ title: "Get almond", is_done: false }],
     );
     expect(props.onClose).toHaveBeenCalled();
+  });
+
+  it("pre-fills subtasks in edit mode", () => {
+    render(
+      <TaskCaptureModal
+        {...baseProps()}
+        initialSubtasks={[{ id: "s1", title: "Existing sub", is_done: false }]}
+      />,
+    );
+    expect(screen.getByText("Existing sub")).toBeInTheDocument();
   });
 
   it("pre-fills the form in edit mode", () => {

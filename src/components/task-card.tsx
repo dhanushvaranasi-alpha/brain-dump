@@ -9,9 +9,17 @@ interface TaskCardProps {
   task: Task;
   onToggle: (task: Task) => void;
   onEdit: (task: Task) => void;
+  subtaskDone?: number;
+  subtaskTotal?: number;
 }
 
-export function TaskCard({ task, onToggle, onEdit }: TaskCardProps) {
+export function TaskCard({
+  task,
+  onToggle,
+  onEdit,
+  subtaskDone = 0,
+  subtaskTotal = 0,
+}: TaskCardProps) {
   const done = task.status === "done";
   return (
     <motion.li
@@ -45,6 +53,14 @@ export function TaskCard({ task, onToggle, onEdit }: TaskCardProps) {
         >
           {task.title}
         </span>
+        {subtaskTotal > 0 && (
+          <span
+            aria-label={`${subtaskDone} of ${subtaskTotal} subtasks done`}
+            className="rounded-full bg-white/10 px-2 py-0.5 text-xs opacity-80"
+          >
+            {subtaskDone}/{subtaskTotal}
+          </span>
+        )}
         <PriorityFlag priority={task.priority} />
         {task.due_at && (
           <span className="text-xs opacity-70">{task.due_at.slice(0, 10)}</span>

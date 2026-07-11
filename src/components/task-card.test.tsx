@@ -48,4 +48,19 @@ describe("TaskCard", () => {
     );
     expect(onEdit).toHaveBeenCalled();
   });
+
+  it("shows a subtask progress badge when the task has subtasks", () => {
+    render(
+      <TaskCard
+        task={task({})}
+        onToggle={vi.fn()}
+        onEdit={vi.fn()}
+        subtaskDone={2}
+        subtaskTotal={5}
+      />,
+    );
+    expect(screen.getByLabelText(/2 of 5 subtasks done/i)).toHaveTextContent(
+      "2/5",
+    );
+  });
 });

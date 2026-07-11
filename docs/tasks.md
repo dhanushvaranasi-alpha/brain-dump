@@ -25,9 +25,25 @@ Capture, organize, edit, and complete tasks. Shipped in Phase 3. Power features
 - Due dates are date-only (`<input type="date">`), stored as `${date}T00:00:00.000Z`;
   grouping and display use `due_at.slice(0,10)` to stay timezone-stable.
 
-## Out of scope (Phase 4)
+## Subtasks (Phase 4)
 
-- Subtasks (separate `subtasks` table + checklist UI).
+- `subtasks` table (owner-scoped through the parent task's RLS) —
+  `supabase/migrations/0004_subtasks.sql` (test: `supabase/tests/rls_subtasks.test.sql`).
+- Data-access + reconcile — `src/lib/subtasks.ts` (`listSubtasks`, `createSubtask`,
+  `toggleSubtask`, `deleteSubtask`, and the pure `diffSubtasks`).
+- Managed in the capture/edit modal via `src/components/subtask-checklist.tsx`
+  (add / check / delete, insertion order). The task card shows a "done/total" badge.
+- Persistence: on create, the task saves first then subtasks insert; on edit,
+  `diffSubtasks` computes create/toggle/delete against the loaded subtasks. The page
+  loads all subtasks SSR (`page.tsx`), and `task-list.tsx` owns the optimistic state.
+
+## Filtering (Phase 4)
+
+- Pure `filterTasks` — `src/lib/task-filter.ts` (category + tags, matching ALL selected tags).
+- `src/components/task-filter-bar.tsx` at the top of `/tasks`; the manager applies the
+  filter over the loaded list, then `groupTasks` runs on the result (grouping unchanged).
+
+## Out of scope (Phase 5)
+
 - Recurrence engine — monthly/annually with an interval and a `lead_days` lead time;
   the next occurrence surfaces N days before its due date (config in `tasks.recurrence`).
-- Filtering the list by category or tag.
