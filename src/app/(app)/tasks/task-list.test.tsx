@@ -155,4 +155,24 @@ describe("TaskList", () => {
     expect(screen.queryByText("Home task")).not.toBeInTheDocument();
     expect(screen.getByText("Work task")).toBeInTheDocument();
   });
+
+  it("shows a no-matches message when the filter excludes every task", async () => {
+    render(
+      <TaskList
+        initialTasks={[
+          task({ id: "t1", title: "Work task", tags: ["work"] }),
+          task({ id: "t2", title: "Urgent task", tags: ["urgent"] }),
+        ]}
+        categories={CATS}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /filter tag work/i }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /filter tag urgent/i }),
+    );
+    expect(screen.getByText(/no matching tasks/i)).toBeInTheDocument();
+    expect(screen.queryByText("Work task")).not.toBeInTheDocument();
+  });
 });
