@@ -50,7 +50,8 @@ export function TaskList({
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
 
-  const groups = groupTasks(filterTasks(tasks, filter), todayKey());
+  const visibleTasks = filterTasks(tasks, filter);
+  const groups = groupTasks(visibleTasks, todayKey());
   const allTags = [...new Set(tasks.flatMap((t) => t.tags))].sort();
 
   function subtasksFor(taskId: string): Subtask[] {
@@ -165,6 +166,11 @@ export function TaskList({
         <EmptyState
           title="No tasks yet"
           description="Tap the + button to capture your first task."
+        />
+      ) : visibleTasks.length === 0 ? (
+        <EmptyState
+          title="No matching tasks"
+          description="No tasks match the current filter."
         />
       ) : (
         <div className="space-y-5">
